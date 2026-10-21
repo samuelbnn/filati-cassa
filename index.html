@@ -110,6 +110,26 @@
     <button class="big dark" id="pinGo" type="button">Entra</button>
   </section>
 
+  <!-- solo i telefoni abbinati possono usare la cassa: qui si abbina questo telefono con il codice dato dall'editor di Apps Script -->
+  <section class="pin" id="pairView" hidden>
+    <h2>Abbina questo telefono</h2>
+    <p>La cassa funziona solo sui telefoni del negozio. Nell'editor di Apps Script esegui <b>abbinaTelefono</b> e scrivi qui il codice che ti dà.</p>
+    <input class="in" id="pairCode" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Codice di abbinamento" placeholder="000000">
+    <label for="pairName" style="text-align:left">Nome del telefono <small>(per riconoscerlo dopo)</small></label>
+    <input class="in" id="pairName" style="font-size:1.05rem;letter-spacing:0;max-width:none" maxlength="40" autocomplete="off" placeholder="iPhone cassa 1">
+    <div class="msg err" id="pairErr" hidden></div><p></p>
+    <button class="big dark" id="pairGo" type="button">Abbina</button>
+    <p></p><button class="link" id="pairBack" type="button">Ho sbagliato PIN</button>
+  </section>
+
+  <!-- chi non è il negozio e inquadra il QR del suo buono arriva qui -->
+  <section class="pin" id="guestView" hidden>
+    <h2>Buono regalo Filati Italia</h2>
+    <p>Codice</p><div class="cardbox" style="margin:0 auto;max-width:300px"><div class="code" id="guestCode" style="font-size:1.3rem"></div></div>
+    <p>Puoi usarlo in negozio mostrando il buono, oppure sul sito scrivendo il codice al momento del pagamento.</p>
+    <p></p><button class="link" id="guestShop" type="button">Sono il negozio</button>
+  </section>
+
   <section id="main" hidden>
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="tUse" aria-selected="true">Usa un buono</button>
@@ -189,6 +209,22 @@
   var $ = function (id) { return document.getElementById(id); };
   var PIN = '';
   try { PIN = localStorage.getItem(PIN_KEY) || ''; } catch (e) {}
+  // chiave segreta di questo telefono, creata qui la prima volta: l'app web accetta solo le chiavi dei telefoni abbinati
+  var DEVICE_KEY = 'fi-cassa-device', PAIRED_KEY = 'fi-cassa-paired', DEVICE = '';
+  try { DEVICE = localStorage.getItem(DEVICE_KEY) || ''; } catch (e) {}
+  if (!/^[A-Za-z0-9_-]{40,}$/.test(DEVICE)) {
+    var rnd = new Uint8Array(32);
+    crypto.getRandomValues(rnd);
+    DEVICE = btoa(String.fromCharCode.apply(null, rnd)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    try { localStorage.setItem(DEVICE_KEY, DEVICE); } catch (e) {}
+  }
+  function paired(v) {
+    try {
+      if (v === undefined) return localStorage.getItem(PAIRED_KEY) === '1';
+      if (v) localStorage.setItem(PAIRED_KEY, '1'); else localStorage.removeItem(PAIRED_KEY);
+    } catch (e) {}
+    return !!v;
+  }
   var card = null, last = null, sellAmount = 0;
   var euro = function (c) { return '€ ' + (c / 100).toFixed(2).replace('.', ','); };
   var escH = function (s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
@@ -200,19 +236,26 @@
 
   /* ---------- chiamate all'app web (con il PIN) ---------- */
   function api(body) {
-    body.pin = PIN;
+    body.pin = PIN; body.device = DEVICE;
     return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json(); })
       .catch(function () { return { ok: false, error: 'Connessione assente: riprova' }; })
       .then(function (d) {
-        if (!d.ok && /^PIN|Cassa non attiva/.test(d.error || '')) { forget(); showPin(d.error); }
+        if (!d.ok && /^Telefono non autorizzato/.test(d.error || '')) { paired(false); showPair(''); }
+        else if (!d.ok && /^PIN|Cassa non attiva/.test(d.error || '')) { forget(); showPin(d.error); }
+        else if (d.ok) paired(true);
         return d;
       });
   }
 
-  /* ---------- PIN ---------- */
-  function showPin(err) { stopScan(); $('pinView').hidden = false; $('main').hidden = true; $('logout').hidden = true; say($('pinErr'), err || ''); $('pin').focus(); }
-  function showMain() { $('pinView').hidden = true; $('main').hidden = false; $('logout').hidden = false; }
+  /* ---------- PIN e abbinamento del telefono ---------- */
+  function view(id) {
+    ['pinView', 'pairView', 'guestView', 'main'].forEach(function (v) { $(v).hidden = v !== id; });
+    $('logout').hidden = id !== 'main';
+  }
+  function showPin(err) { stopScan(); view('pinView'); say($('pinErr'), err || ''); $('pin').focus(); }
+  function showPair(err) { stopScan(); view('pairView'); say($('pairErr'), err || ''); $('pairCode').focus(); }
+  function showMain() { view('main'); }
   function forget() { PIN = ''; try { localStorage.removeItem(PIN_KEY); } catch (e) {} }
   var started = false;
   $('pinGo').addEventListener('click', function () {
@@ -224,8 +267,9 @@
     PIN = v;
     api({ api: 'cassaPing' }).then(function (d) {
       btn.disabled = false;
-      if (!d.ok) { PIN = ''; return say($('pinErr'), d.error); }
       $('pin').value = '';
+      if (!d.ok && !$('pairView').hidden) return;   // PIN da controllare all'abbinamento: resta in memoria fino ad allora
+      if (!d.ok) { PIN = ''; return say($('pinErr'), d.error); }
       try { localStorage.setItem(PIN_KEY, v); } catch (e) {}
       say($('pinErr'), '');
       showMain();
@@ -240,6 +284,23 @@
     $('pin').focus();
   });
   $('logout').addEventListener('click', function () { forget(); showPin(''); });
+  $('pairGo').addEventListener('click', function () {
+    var code = $('pairCode').value.replace(/\D/g, '');
+    if (code.length !== 6) return say($('pairErr'), 'Il codice di abbinamento ha 6 cifre');
+    if (!PIN) return showPin('');
+    var btn = $('pairGo');
+    btn.disabled = true; say($('pairErr'), 'Abbino il telefono…', 'info');
+    api({ api: 'cassaPair', pair: code, name: $('pairName').value.trim().slice(0, 40) }).then(function (d) {
+      btn.disabled = false;
+      if (!d.ok) { if (!$('pairView').hidden) say($('pairErr'), d.error); return; }
+      $('pairCode').value = ''; say($('pairErr'), '');
+      try { localStorage.setItem(PIN_KEY, PIN); } catch (e) {}
+      if (!started) startMain(); else showMain();
+    });
+  });
+  $('pairCode').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') $('pairGo').click(); });
+  $('pairBack').addEventListener('click', function () { forget(); showPin(''); });
+  $('guestShop').addEventListener('click', function () { showPin(''); });
 
   /* ---------- schede ---------- */
   function tab(useTab) {
@@ -601,7 +662,13 @@
   }
   window.addEventListener('hashchange', function () { if (takeLink() && started && PIN) { stopScan(); tab(true); startMain(); } });
   takeLink();
-  if (PIN) startMain(); else showPin('');
+  if (PIN) {
+    var fromLink = !!linked;
+    startMain();
+    if (!fromLink) api({ api: 'cassaPing' });   // se il telefono non è (più) abbinato lo dice subito
+  } else if (linked && !paired()) {   // un cliente che ha inquadrato il suo buono
+    view('guestView'); $('guestCode').textContent = linked;
+  } else showPin('');
 })();
 </script>
 </body>
