@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cassa Gift Card – Filati Italia</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FA8900">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cassa FI">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* Filati Italia – Cassa gift card (pagina su GitHub Pages, da usare dal telefono del negozio).
+     Fa le stesse cose della pagina Cassa nascosta su Google Sites, ma qui il browser può usare
+     la fotocamera dal vivo: si inquadra il QR del buono e il saldo compare da solo. */
+  :root { --brand:#FA8900; --brand-dark:#d97600; --ink:#1f1f1f; --muted:#6b6b6b; --line:#e7e3df; --soft:#f6f2ee; --ok:#2e9d5b; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--ink); font-family: 'Montserrat', Arial, sans-serif; }
+  body { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  [hidden] { display: none !important; }
+  button, input { font: inherit; color: inherit; }
+  .app { max-width: 480px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .top h1 { margin: 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .top h1 img { width: 30px; height: 30px; }
+  .top h1 span { color: var(--brand-dark); }
+  .link { border: 0; background: none; font-weight: 600; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 6px 0; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
+  .tabs button { border: 0; background: none; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .tabs button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .big { width: 100%; border: 0; border-radius: 16px; padding: 18px; font-weight: 800; font-size: 1.1rem; background: var(--brand); color: #fff; cursor: pointer; }
+  .big:active { transform: scale(.98); } .big:disabled { opacity: .6; }
+  .big.dark { background: var(--ink); } .big.ok { background: var(--ok); } .big.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+  .scanbtn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 22px; font-size: 1.15rem; }
+  .scanbtn svg { width: 30px; height: 30px; flex: none; }
+  .or { text-align: center; color: var(--muted); font-size: .85rem; margin: 14px 0; }
+  .alt { display: block; margin: 10px auto 0; font-size: .85rem; }
+  label { display: block; font-weight: 700; font-size: .9rem; margin: 14px 0 6px; }
+  label small { color: var(--muted); font-weight: 500; }
+  .in { width: 100%; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 12px; outline: none; font-size: 1.05rem; background: #fff; }
+  .in:focus { border-color: var(--brand); }
+  .in.code { text-transform: uppercase; letter-spacing: .1em; font-family: Consolas, monospace; }
+  .in.money { font-size: 1.6rem; font-weight: 800; text-align: center; }
+  .row { display: flex; gap: 8px; } .row .in { flex: 1; min-width: 0; }
+  .row button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--ink); color: #fff; font-weight: 700; cursor: pointer; }
+  .msg { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; font-size: .9rem; font-weight: 600; }
+  .msg.err { background: #fdecea; color: var(--err); } .msg.info { background: var(--soft); color: var(--muted); }
+  .cardbox { border: 2px solid var(--brand); border-radius: 18px; padding: 16px; margin-top: 16px; background: #fffaf3; }
+  .cardbox .code { font-family: Consolas, monospace; letter-spacing: .12em; font-weight: 700; }
+  .cardbox .bal { font-size: 2.3rem; font-weight: 900; margin: 6px 0 2px; }
+  .cardbox .sub { color: var(--muted); font-size: .85rem; }
+  .cardbox.blocked { border-color: var(--err); background: #fdecea; }
+  .moves { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px solid #f1dcc2; font-size: .8rem; color: var(--muted); }
+  .moves li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+  .confirm { margin-top: 14px; padding: 14px; border-radius: 14px; background: var(--soft); font-size: .95rem; line-height: 1.5; }
+  .confirm b { font-size: 1.05rem; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .done { text-align: center; padding: 18px 8px; }
+  .done .tick { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 2rem; font-weight: 900;
+                display: grid; place-items: center; margin: 0 auto 10px; }
+  .done h2 { margin: 0 0 6px; }
+  .done .bal { font-size: 2rem; font-weight: 900; }
+  .done p { color: var(--muted); margin: 6px 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { flex: 1 1 28%; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-weight: 800; cursor: pointer; }
+  .chips button[aria-pressed="true"] { border-color: var(--brand); background: #fff4e6; color: var(--brand-dark); }
+  .pin { text-align: center; padding-top: 30px; }
+  .pin .in { text-align: center; font-size: 1.6rem; letter-spacing: .4em; max-width: 220px; margin: 0 auto; display: block; }
+  .pin p { color: var(--muted); }
+  .masked { -webkit-text-security: disc; text-security: disc; }
+
+  /* lettore QR dal vivo: tutto schermo, con il riquadro di mira */
+  .scanner { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; flex-direction: column; }
+  .scanner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .aim { position: absolute; left: 50%; top: 45%; width: min(70vw, 300px); aspect-ratio: 1; transform: translate(-50%, -50%);
+         border-radius: 24px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.45); }
+  .aim::before, .aim::after { content: ""; position: absolute; inset: 0; border-radius: 24px; border: 4px solid #fff; }
+  .aim::after { border-color: var(--brand); clip-path: inset(0 0 calc(100% - 4px) 0); animation: sweep 1.8s ease-in-out infinite; }
+  .aim.hit::before { border-color: var(--ok); }
+  @keyframes sweep { 0% { clip-path: inset(0 0 96% 0); } 50% { clip-path: inset(96% 0 0 0); } 100% { clip-path: inset(0 0 96% 0); } }
+  .stop { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center;
+          padding: max(14px, env(safe-area-inset-top)) 16px 14px; color: #fff; font-weight: 700; }
+  .stop button { border: 0; border-radius: 999px; padding: 10px 16px; background: rgba(255,255,255,.18); color: #fff; font-weight: 700; cursor: pointer; }
+  .stop button.on { background: #fff; color: var(--ink); }
+  .hint { position: absolute; left: 16px; right: 16px; bottom: max(28px, env(safe-area-inset-bottom)); z-index: 2; text-align: center; color: #fff; }
+  .hint p { margin: 0 0 12px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .hint .big { max-width: 420px; margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><h1><img src="icon-192.png" alt="">Cassa <span>Gift Card</span></h1><button class="link" id="logout" type="button" hidden>Esci</button></div>
+
+  <section class="pin" id="pinView" hidden>
+    <h2>PIN del negozio</h2><p>Serve solo la prima volta su questo telefono.</p>
+    <!-- campo di testo "mascherato" e non password: così il telefono non ci infila da solo una password salvata -->
+    <input class="in masked" id="pin" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off"
+           autocapitalize="off" spellcheck="false" name="fi-pin-cassa" maxlength="12" aria-label="PIN">
+    <button class="link" id="pinShow" type="button">Mostra il PIN</button>
+    <div class="msg err" id="pinErr" hidden></div><p></p>
+    <button class="big dark" id="pinGo" type="button">Entra</button>
+  </section>
+
+  <section id="main" hidden>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tUse" aria-selected="true">Usa un buono</button>
+      <button type="button" role="tab" id="tNew" aria-selected="false">Vendi un buono</button>
+    </div>
+
+    <div id="use">
+      <div id="find">
+        <button class="big scanbtn" id="scan" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></svg>
+          Inquadra il QR del buono</button>
+        <button class="link alt" id="photo" type="button">La fotocamera non parte? Scatta una foto del QR</button>
+        <input id="cam" type="file" accept="image/*" capture="environment" hidden>
+        <div class="or">oppure scrivi il codice</div>
+        <div class="row"><input class="in code" id="code" placeholder="FI-XXXX-XXXX" maxlength="20" autocomplete="off" spellcheck="false">
+          <button type="button" id="look">Cerca</button></div>
+        <div class="msg" id="findMsg" hidden></div>
+      </div>
+
+      <div id="cardView" hidden>
+        <div class="cardbox" id="cardbox"><div class="code" id="cCode"></div><div class="bal" id="cBal"></div>
+          <div class="sub" id="cSub"></div><ul class="moves" id="cMoves"></ul></div>
+        <div id="spend">
+          <label for="amt">Importo dello scontrino</label><input class="in money" id="amt" inputmode="decimal" placeholder="0,00" autocomplete="off">
+          <label for="email">Email del cliente <small>(riceve il saldo aggiornato)</small></label>
+          <input class="in" id="email" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
+          <label for="ref">N. scontrino <small>(facoltativo)</small></label><input class="in" id="ref" autocomplete="off" maxlength="30">
+          <div class="msg err" id="spendErr" hidden></div><p></p>
+          <button class="big" id="go" type="button">Scala dal buono</button>
+          <div class="confirm" id="confirm" hidden><div id="confirmTxt"></div>
+            <div class="btns"><button class="big ghost" id="no" type="button">Indietro</button><button class="big ok" id="yes" type="button">Conferma</button></div></div>
+        </div>
+        <p></p><button class="big ghost" id="other" type="button">Un altro buono</button>
+      </div>
+
+      <div class="done" id="doneView" hidden><div class="tick">✓</div><h2>Fatto!</h2><p>Nuovo saldo del buono</p>
+        <div class="bal" id="dBal"></div><p id="dTxt"></p><p id="dPay"></p>
+        <button class="big" id="next" type="button">Nuovo cliente</button><p></p>
+        <button class="link" id="undo" type="button">Ho sbagliato: annulla questa operazione</button>
+        <div class="msg" id="undoMsg" hidden></div></div>
+    </div>
+
+    <div id="sell" hidden>
+      <label>Taglio</label><div class="chips" id="chips"></div>
+      <label for="sEmail">Email del cliente <small>(riceve il buono in PDF)</small></label>
+      <input class="in" id="sEmail" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
+      <label for="sName">Nome <small>(facoltativo)</small></label><input class="in" id="sName" autocomplete="off" maxlength="80">
+      <div class="msg" id="sellMsg" hidden></div><p></p>
+      <button class="big" id="sellGo" type="button">Crea e invia il buono</button>
+      <p style="color:#6b6b6b;font-size:.85rem">Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.</p>
+    </div>
+  </section>
+</div>
+
+<div class="scanner" id="scanner" hidden role="dialog" aria-label="Lettore QR">
+  <video id="video" playsinline muted autoplay></video>
+  <div class="stop"><span>Inquadra il QR</span>
+    <span><button type="button" id="torch" hidden>Torcia</button> <button type="button" id="scanClose">Chiudi</button></span></div>
+  <div class="aim" id="aim"></div>
+  <div class="hint"><p id="scanHint">Tieni il QR dentro il riquadro: si legge da solo.</p>
+    <button class="big ghost" id="scanManual" type="button">Scrivo il codice a mano</button></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // stessa app web Apps Script del sito: la cassa chiama solo cassaPing, cassaInfo, cassaRedeem, cassaUndo e cassaIssue (con il PIN)
+  var API = 'https://script.google.com/macros/s/AKfycbwsd82f1RfoOrKPgoVn40-I8s-FaSGV3zWP_j8VcWViL0w_5wStmwowqrGeeMD9tcd2Bg/exec';
+  var AMOUNTS = [50, 75, 100, 150, 200];
+  var PIN_KEY = 'fi-cassa-pin';
+  var JSQR = ['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js', 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];   // il secondo se il primo è bloccato
+  var CODE_RE = /FI[-\s]?([23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4})[-\s]?([23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4})/i;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var PIN = '';
+  try { PIN = localStorage.getItem(PIN_KEY) || ''; } catch (e) {}
+  var card = null, last = null, sellAmount = 0;
+  var euro = function (c) { return '€ ' + (c / 100).toFixed(2).replace('.', ','); };
+  var escH = function (s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+  function parseEuro(s) {
+    s = String(s || '').trim().replace(/[€\s]/g, '').replace(',', '.');
+    return /^\d+(\.\d{1,2})?$/.test(s) ? Math.round(parseFloat(s) * 100) : 0;
+  }
+  function say(el, text, kind) { el.textContent = text; el.className = 'msg ' + (kind || 'err'); el.hidden = !text; }
+
+  /* ---------- chiamate all'app web (con il PIN) ---------- */
+  function api(body) {
+    body.pin = PIN;
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return { ok: false, error: 'Connessione assente: riprova' }; })
+      .then(function (d) {
+        if (!d.ok && /^PIN|Cassa non attiva/.test(d.error || '')) { forget(); showPin(d.error); }
+        return d;
+      });
+  }
+
+  /* ---------- PIN ---------- */
+  function showPin(err) { stopScan(); $('pinView').hidden = false; $('main').hidden = true; $('logout').hidden = true; say($('pinErr'), err || ''); $('pin').focus(); }
+  function showMain() { $('pinView').hidden = true; $('main').hidden = false; $('logout').hidden = false; }
+  function forget() { PIN = ''; try { localStorage.removeItem(PIN_KEY); } catch (e) {} }
+  var started = false;
+  $('pinGo').addEventListener('click', function () {
+    var v = $('pin').value.replace(/\s+/g, '');
+    if (v.length < 4) return say($('pinErr'), 'Il PIN ha almeno 4 cifre');
+    // il PIN si controlla subito: se è sbagliato lo dice qui, non alla prima ricerca
+    var btn = $('pinGo');
+    btn.disabled = true; say($('pinErr'), 'Controllo il PIN…', 'info');
+    PIN = v;
+    api({ api: 'cassaPing' }).then(function (d) {
+      btn.disabled = false;
+      if (!d.ok) { PIN = ''; return say($('pinErr'), d.error); }
+      $('pin').value = '';
+      try { localStorage.setItem(PIN_KEY, v); } catch (e) {}
+      say($('pinErr'), '');
+      showMain();
+      if (!started) { started = true; reset(); }
+      else if ($('code').value.trim() && !$('find').hidden) lookup();   // riprende la ricerca interrotta dal PIN
+    });
+  });
+  $('pin').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') $('pinGo').click(); });
+  $('pinShow').addEventListener('click', function () {
+    var hidden = $('pin').classList.toggle('masked');
+    $('pinShow').textContent = hidden ? 'Mostra il PIN' : 'Nascondi il PIN';
+    $('pin').focus();
+  });
+  $('logout').addEventListener('click', function () { forget(); showPin(''); });
+
+  /* ---------- schede ---------- */
+  function tab(useTab) {
+    $('tUse').setAttribute('aria-selected', String(useTab)); $('tNew').setAttribute('aria-selected', String(!useTab));
+    $('use').hidden = !useTab; $('sell').hidden = useTab;
+  }
+  $('tUse').addEventListener('click', function () { tab(true); });
+  $('tNew').addEventListener('click', function () { tab(false); });
+
+  function reset() {
+    card = null; last = null;
+    $('find').hidden = false; $('cardView').hidden = true; $('doneView').hidden = true;
+    $('code').value = ''; $('amt').value = ''; $('ref').value = ''; $('email').value = '';
+    say($('findMsg'), ''); say($('spendErr'), ''); $('confirm').hidden = true; $('go').hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- lettori QR: quello del telefono (BarcodeDetector) se c'è, altrimenti jsQR ---------- */
+  var jsqrReady = null;
+  function loadJsQR() {
+    if (window.jsQR) return Promise.resolve();
+    if (!jsqrReady) jsqrReady = new Promise(function (res, rej) {
+      var next = function (i) {
+        if (i >= JSQR.length) { jsqrReady = null; return rej(); }
+        var s = document.createElement('script'); s.src = JSQR[i];
+        s.onload = function () { if (window.jsQR) res(); else next(i + 1); };
+        s.onerror = function () { next(i + 1); };
+        document.head.appendChild(s);
+      };
+      next(0);
+    });
+    return jsqrReady;
+  }
+  var detector = null;
+  var detectorReady = (function () {
+    if (!('BarcodeDetector' in window)) return Promise.resolve(null);
+    var make = function () { try { return new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { return null; } };
+    var p = window.BarcodeDetector.getSupportedFormats ? window.BarcodeDetector.getSupportedFormats() : Promise.resolve(['qr_code']);
+    return p.then(function (f) { detector = f.indexOf('qr_code') >= 0 ? make() : null; return detector; }).catch(function () { return null; });
+  })();
+  function codeIn(text) { var m = CODE_RE.exec(String(text || '').toUpperCase()); return m ? 'FI-' + m[1] + '-' + m[2] : ''; }
+
+  /* ---------- lettura dal vivo con la fotocamera ---------- */
+  var stream = null, timer = null, scanning = false, wrongShown = 0;
+  var work = document.createElement('canvas'), wctx = work.getContext('2d', { willReadFrequently: true });
+  function startScan() {
+    say($('findMsg'), '');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return noCamera('Questo browser non può usare la fotocamera dal vivo.');
+    loadJsQR().catch(function () {});
+    $('scanner').hidden = false; $('aim').classList.remove('hit');
+    $('scanHint').textContent = 'Accendo la fotocamera…';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      .then(function (s) {
+        stream = s;
+        var v = $('video'); v.srcObject = s;
+        v.setAttribute('playsinline', ''); v.muted = true;
+        return v.play();
+      })
+      .then(function () {
+        $('scanHint').textContent = 'Tieni il QR dentro il riquadro: si legge da solo.';
+        setupTorch();
+        scanning = true; tick();
+      })
+      .catch(function (err) {
+        stopScan();
+        var denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+        noCamera(denied ? 'La fotocamera non ha il permesso: consentila nelle impostazioni del browser per questo sito, oppure scatta una foto.'
+                        : 'Non riesco ad aprire la fotocamera: scatta una foto del QR oppure scrivi il codice.');
+      });
+  }
+  function noCamera(text) { $('scanner').hidden = true; say($('findMsg'), text); }
+  function stopScan() {
+    scanning = false; clearTimeout(timer);
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    var v = $('video'); v.srcObject = null;
+    $('scanner').hidden = true; $('torch').hidden = true; $('torch').classList.remove('on');
+  }
+  function tick() {
+    if (!scanning) return;
+    var v = $('video');
+    if (v.readyState < 2 || !v.videoWidth) { timer = setTimeout(tick, 120); return; }
+    readFrame(v).then(function (text) {
+      if (!scanning) return;
+      var code = text && codeIn(text);
+      if (code) return found(code);
+      if (text && Date.now() - wrongShown > 2500) { wrongShown = Date.now(); $('scanHint').textContent = 'Questo QR non è un buono Filati Italia.'; }
+      timer = setTimeout(tick, detector ? 120 : 60);
+    });
+  }
+  // un fotogramma: prima il lettore del telefono, poi jsQR sull'immagine ridotta e sul centro (dove sta il riquadro di mira)
+  function readFrame(v) {
+    var viaJs = function () {
+      if (!window.jsQR) return null;
+      var W = v.videoWidth, H = v.videoHeight;
+      var tries = [[1, 720], [0.55, 640]];
+      for (var i = 0; i < tries.length; i++) {
+        var crop = tries[i][0], cw = Math.round(W * crop), ch = Math.round(H * crop);
+        var k = Math.min(1, tries[i][1] / Math.max(cw, ch)), w = Math.round(cw * k), h = Math.round(ch * k);
+        work.width = w; work.height = h;
+        wctx.drawImage(v, Math.round((W - cw) / 2), Math.round((H - ch) / 2), cw, ch, 0, 0, w, h);
+        var r = window.jsQR(wctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+        if (r && r.data) return r.data;
+      }
+      return null;
+    };
+    if (detector) {
+      return detector.detect(v).then(function (codes) {
+        return codes && codes[0] && codes[0].rawValue ? codes[0].rawValue : null;
+      }).catch(function () { return viaJs(); });
+    }
+    return Promise.resolve(viaJs());
+  }
+  function found(code) {
+    scanning = false;
+    $('aim').classList.add('hit');
+    try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+    setTimeout(function () { stopScan(); $('code').value = code; lookup(); }, 180);
+  }
+  // torcia (dove il telefono la offre alla pagina: di solito Android)
+  function setupTorch() {
+    var track = stream && stream.getVideoTracks()[0];
+    var caps = track && track.getCapabilities ? track.getCapabilities() : {};
+    $('torch').hidden = !caps.torch;
+  }
+  $('torch').addEventListener('click', function () {
+    var track = stream && stream.getVideoTracks()[0];
+    if (!track) return;
+    var on = !$('torch').classList.contains('on');
+    track.applyConstraints({ advanced: [{ torch: on }] }).then(function () { $('torch').classList.toggle('on', on); }).catch(function () {});
+  });
+  $('scan').addEventListener('click', function () { detectorReady.then(startScan); });
+  $('scanClose').addEventListener('click', stopScan);
+  $('scanManual').addEventListener('click', function () { stopScan(); $('code').focus(); });
+  // se il telefono si blocca o si cambia app, la fotocamera si spegne
+  document.addEventListener('visibilitychange', function () { if (document.hidden) stopScan(); });
+
+  /* ---------- riserva: una foto del QR ---------- */
+  function decodePhoto(file) {
+    return new Promise(function (res) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var done = function (v) { URL.revokeObjectURL(url); res(v || null); };
+        var tryJsQR = function () {
+          if (!window.jsQR) return done(null);
+          var W = img.naturalWidth, H = img.naturalHeight, out = null, tries = [];
+          [1, 0.6, 0.4].forEach(function (crop) { [1200, 1800, 800, 2600].forEach(function (max) { tries.push([crop, max]); }); });
+          var step = function (i) {
+            if (out || i >= tries.length) return done(out);
+            var crop = tries[i][0], max = tries[i][1];
+            var cw = Math.round(W * crop), ch = Math.round(H * crop), sx = Math.round((W - cw) / 2), sy = Math.round((H - ch) / 2);
+            var k = Math.min(1, max / Math.max(cw, ch)), w = Math.round(cw * k), h = Math.round(ch * k);
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            var ctx = c.getContext('2d'); ctx.drawImage(img, sx, sy, cw, ch, 0, 0, w, h);
+            var r = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+            out = r && r.data;
+            setTimeout(function () { step(i + 1); }, 0);
+          };
+          step(0);
+        };
+        if (detector) {
+          detector.detect(img).then(function (codes) { if (codes && codes[0] && codes[0].rawValue) done(codes[0].rawValue); else tryJsQR(); }).catch(tryJsQR);
+          return;
+        }
+        tryJsQR();
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); res(null); };
+      img.src = url;
+    });
+  }
+  $('photo').addEventListener('click', function () { loadJsQR().catch(function () {}); $('cam').click(); });
+  $('cam').addEventListener('change', function () {
+    var f = $('cam').files && $('cam').files[0];
+    $('cam').value = '';
+    if (!f) return;
+    say($('findMsg'), 'Leggo il QR…', 'info');
+    Promise.all([loadJsQR().catch(function () {}), detectorReady]).then(function () { return decodePhoto(f); }).then(function (text) {
+      var code = codeIn(text);
+      if (code) { $('code').value = code; return lookup(); }
+      say($('findMsg'), text ? 'Questo QR non è un buono Filati Italia.'
+        : window.jsQR || detector ? 'Non trovo il QR nella foto: avvicinati finché il QR riempie buona parte della foto e riprova, oppure scrivi il codice.'
+        : 'Non riesco ad aprire il lettore QR: scrivi il codice a mano.');
+    });
+  });
+
+  /* ---------- cerca il buono ---------- */
+  $('look').addEventListener('click', lookup);
+  $('code').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') lookup(); });
+  function lookup() {
+    var v = $('code').value.trim();
+    if (!v) return;
+    say($('findMsg'), 'Cerco il buono…', 'info');
+    api({ api: 'cassaInfo', code: v }).then(function (d) {
+      if (!d.ok) return say($('findMsg'), d.error);
+      showCard(d);
+    });
+  }
+  function showCard(d) {
+    card = d;
+    say($('findMsg'), '');
+    $('find').hidden = true; $('cardView').hidden = false;
+    $('cardbox').classList.toggle('blocked', d.blocked);
+    $('cCode').textContent = d.code;
+    $('cBal').textContent = euro(d.balance);
+    $('cSub').textContent = d.blocked ? 'Buono BLOCCATO: non usarlo' : 'disponibili su ' + euro(d.amount) + (d.name ? ' · ' + d.name : '');
+    $('cMoves').innerHTML = (d.moves || []).map(function (m) {
+      return '<li><span>' + escH(m.date) + ' · ' + escH(m.op) + '</span><span>' + (m.amount > 0 ? '+' : '−') + euro(Math.abs(m.amount)) + '</span></li>';
+    }).join('');
+    $('email').value = d.email || '';
+    $('spend').hidden = d.blocked || d.balance <= 0;
+    if (!d.blocked && d.balance <= 0) $('cSub').textContent = 'Buono esaurito: credito finito';
+    $('amt').value = ''; $('amt').focus();
+  }
+  $('other').addEventListener('click', reset);
+  $('next').addEventListener('click', reset);
+
+  /* ---------- scala dal buono (con conferma) ---------- */
+  $('go').addEventListener('click', function () {
+    var amt = parseEuro($('amt').value), email = $('email').value.trim();
+    if (!amt) return say($('spendErr'), 'Scrivi l\'importo dello scontrino, per esempio 65,60');
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return say($('spendErr'), 'L\'email non sembra giusta (puoi anche lasciarla vuota)');
+    say($('spendErr'), '');
+    var use = Math.min(amt, card.balance), rest = amt - use;
+    $('confirmTxt').innerHTML = 'Scalo <b>' + euro(use) + '</b> dal buono ' + escH(card.code) + '.<br>Saldo: ' + euro(card.balance) + ' → <b>' + euro(card.balance - use) + '</b>' +
+      (rest ? '<br><b style="color:#b3261e">Il cliente paga la differenza: ' + euro(rest) + '</b>' : '');
+    $('confirm').hidden = false; $('go').hidden = true;
+    $('confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  $('no').addEventListener('click', function () { $('confirm').hidden = true; $('go').hidden = false; });
+  $('yes').addEventListener('click', function () {
+    var amt = parseEuro($('amt').value), use = Math.min(amt, card.balance), btn = $('yes');
+    btn.disabled = true; btn.textContent = 'Un attimo…';
+    api({ api: 'cassaRedeem', code: card.code, amount: use, email: $('email').value.trim(), ref: $('ref').value.trim() }).then(function (d) {
+      btn.disabled = false; btn.textContent = 'Conferma';
+      if (!d.ok) { $('confirm').hidden = true; $('go').hidden = false; return say($('spendErr'), d.error); }
+      last = { code: d.code, moveId: d.moveId };
+      $('cardView').hidden = true; $('doneView').hidden = false;
+      $('dBal').textContent = euro(d.balance);
+      $('dTxt').textContent = 'Scalati ' + euro(d.used) + ' dal buono ' + d.code + (d.mailed ? ' · mail inviata a ' + d.email : ' · nessuna mail (email mancante)');
+      $('dPay').innerHTML = amt > use ? '<b style="color:#b3261e">Il cliente paga la differenza: ' + euro(amt - use) + '</b>' : '';
+      $('undo').hidden = false; say($('undoMsg'), '');
+      window.scrollTo(0, 0);
+    });
+  });
+  // conferma con un secondo tocco (niente finestre del browser)
+  function twoTaps(btn, label) {
+    if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.label; return true; }
+    btn.dataset.armed = '1'; btn.dataset.label = btn.textContent; btn.textContent = label;
+    setTimeout(function () { if (btn.dataset.armed) { delete btn.dataset.armed; btn.textContent = btn.dataset.label; } }, 6000);
+    return false;
+  }
+  $('undo').addEventListener('click', function () {
+    if (!last || !twoTaps($('undo'), 'Tocca di nuovo per annullare l\'operazione')) return;
+    api({ api: 'cassaUndo', code: last.code, moveId: last.moveId }).then(function (d) {
+      if (!d.ok) return say($('undoMsg'), d.error);
+      $('dBal').textContent = euro(d.balance);
+      $('dTxt').textContent = 'Operazione annullata: il credito è tornato sul buono.';
+      $('dPay').textContent = ''; $('undo').hidden = true; last = null;
+    });
+  });
+
+  /* ---------- vendi un buono in negozio ---------- */
+  $('chips').innerHTML = AMOUNTS.map(function (a) { return '<button type="button" data-a="' + a + '" aria-pressed="false">€ ' + a + '</button>'; }).join('');
+  $('chips').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-a]');
+    if (!b) return;
+    sellAmount = Number(b.dataset.a);
+    $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+  });
+  $('sellGo').addEventListener('click', function () {
+    var email = $('sEmail').value.trim(), btn = $('sellGo');
+    if (!sellAmount) return say($('sellMsg'), 'Scegli il taglio');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return say($('sellMsg'), 'Serve l\'email del cliente per mandargli il buono');
+    if (!twoTaps(btn, 'Tocca di nuovo: € ' + sellAmount + ' a ' + email)) return;
+    btn.disabled = true; say($('sellMsg'), 'Creo il buono e lo invio… (qualche secondo)', 'info');
+    api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim() }).then(function (d) {
+      btn.disabled = false;
+      if (!d.ok) return say($('sellMsg'), d.error);
+      say($('sellMsg'), '✓ Buono ' + d.code + ' da ' + euro(d.amount) + ' creato e inviato a ' + d.email, 'info');
+      $('sEmail').value = ''; $('sName').value = ''; sellAmount = 0;
+      $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+    });
+  });
+
+  /* ---------- avvio ---------- */
+  if (PIN) { started = true; showMain(); reset(); } else showPin('');
+})();
+</script>
+</body>
+</html>
