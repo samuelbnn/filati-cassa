@@ -182,7 +182,8 @@
   var API = 'https://script.google.com/macros/s/AKfycbwsd82f1RfoOrKPgoVn40-I8s-FaSGV3zWP_j8VcWViL0w_5wStmwowqrGeeMD9tcd2Bg/exec';
   var AMOUNTS = [50, 75, 100, 150, 200];
   var PIN_KEY = 'fi-cassa-pin';
-  var JSQR = ['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js', 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];   // il secondo se il primo è bloccato
+  // jsQR 1.4.0: la copia nel sito, poi le due CDN se manca
+  var JSQR = ['jsQR.min.js', 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js', 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];
   var CODE_RE = /FI[-\s]?([23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4})[-\s]?([23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4})/i;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -228,7 +229,7 @@
       try { localStorage.setItem(PIN_KEY, v); } catch (e) {}
       say($('pinErr'), '');
       showMain();
-      if (!started) { started = true; reset(); }
+      if (!started) startMain();
       else if ($('code').value.trim() && !$('find').hidden) lookup();   // riprende la ricerca interrotta dal PIN
     });
   });
@@ -585,7 +586,22 @@
   });
 
   /* ---------- avvio ---------- */
-  if (PIN) { started = true; showMain(); reset(); } else showPin('');
+  // aperta dal QR di un buono con la fotocamera dell'iPhone (link …/filati-cassa/#FI-XXXX-XXXX): cerca subito quel buono
+  var linked = '';
+  function takeLink() {
+    var s = location.hash + ' ' + location.search;
+    try { s = decodeURIComponent(s); } catch (e) {}
+    var c = codeIn(s);
+    if (c) { linked = c; history.replaceState(null, '', location.pathname); }
+    return c;
+  }
+  function startMain() {
+    started = true; showMain(); reset();
+    if (linked) { $('code').value = linked; linked = ''; lookup(); }
+  }
+  window.addEventListener('hashchange', function () { if (takeLink() && started && PIN) { stopScan(); tab(true); startMain(); } });
+  takeLink();
+  if (PIN) startMain(); else showPin('');
 })();
 </script>
 </body>
