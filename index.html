@@ -22,7 +22,8 @@
   :root { --brand:#FA8900; --brand-dark:#d97600; --ink:#1f1f1f; --muted:#6b6b6b; --line:#e7e3df; --soft:#f6f2ee; --ok:#2e9d5b; --err:#b3261e; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #fff; color: var(--ink); font-family: 'Montserrat', Arial, sans-serif; }
-  body { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  /* spazio bianco in fondo: le barre di Safari non coprono i pulsanti in basso (es. "annulla questa operazione") */
+  body { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   [hidden] { display: none !important; }
   button, input { font: inherit; color: inherit; }
   .app { max-width: 480px; margin: 0 auto; }
@@ -91,7 +92,7 @@
   .tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 14px; }
   .tools:not(:has(button:not([hidden]))) { display: none; }
   .hint .info { display: block; margin-top: 10px; font-size: .72rem; opacity: .6; }
-  .hint { position: absolute; left: 16px; right: 16px; bottom: max(28px, env(safe-area-inset-bottom)); z-index: 2; text-align: center; color: #fff; }
+  .hint { position: absolute; left: 16px; right: 16px; bottom: calc(48px + env(safe-area-inset-bottom, 0px)); z-index: 2; text-align: center; color: #fff; }
   .hint p { margin: 0 0 12px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
   .hint .big { max-width: 420px; margin: 0 auto; display: block; }
 </style>
