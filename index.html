@@ -32,6 +32,7 @@
   .top h1 img { width: 30px; height: 30px; }
   .top h1 span { color: var(--brand-dark); }
   .link { border: 0; background: none; font-weight: 600; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 6px 0; }
+  .link[data-armed] { color: #b3261e; font-weight: 800; }   /* in attesa del secondo tocco */
   .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
   .tabs button { border: 0; background: none; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; color: var(--muted); }
   .tabs button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
@@ -48,6 +49,16 @@
   .in:focus { border-color: var(--brand); }
   .in.code { text-transform: uppercase; letter-spacing: .1em; font-family: Consolas, monospace; }
   .in.money { font-size: 1.6rem; font-weight: 800; text-align: center; }
+  textarea.in { resize: vertical; min-height: 80px; font: inherit; font-size: 1rem; }
+  .chk { display: flex; align-items: center; gap: 10px; margin: 16px 0 4px; cursor: pointer; }
+  .chk input { width: 22px; height: 22px; accent-color: var(--brand); margin: 0; }
+  .giftbox { border: 1.5px solid var(--line); border-radius: 14px; padding: 2px 14px 14px; background: #fffaf3; }
+  .note { color: var(--muted); font-size: .85rem; }
+  /* buono cartaceo appena creato: il codice da scrivere a mano, grande */
+  .paperbox { text-align: center; border: 2px dashed var(--brand); border-radius: 18px; padding: 20px 14px; margin-top: 4px; background: #fffaf3; }
+  .paperbox .pcode { font-family: Consolas, monospace; font-size: 2.1rem; font-weight: 800; letter-spacing: .06em; margin: 8px 0 2px; }
+  .paperbox .pamt { font-size: 1.4rem; font-weight: 900; color: var(--brand-dark); }
+  .paperbox p { color: var(--muted); font-size: .9rem; margin: 10px 0 16px; }
   .row { display: flex; gap: 8px; } .row .in { flex: 1; min-width: 0; }
   .row button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--ink); color: #fff; font-weight: 700; cursor: pointer; }
   .msg { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; font-size: .9rem; font-weight: 600; }
@@ -156,7 +167,7 @@
           <div class="sub" id="cSub"></div><ul class="moves" id="cMoves"></ul></div>
         <div id="spend">
           <label for="amt">Importo dello scontrino</label><input class="in money" id="amt" inputmode="decimal" placeholder="0,00" autocomplete="off">
-          <label for="email">Email del cliente <small>(riceve il saldo aggiornato)</small></label>
+          <label for="email">Email del cliente <small>(riceve il saldo aggiornato · vuota = nessuna mail)</small></label>
           <input class="in" id="email" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
           <label for="ref">N. scontrino <small>(facoltativo)</small></label><input class="in" id="ref" autocomplete="off" maxlength="30">
           <div class="msg err" id="spendErr" hidden></div><p></p>
@@ -175,13 +186,38 @@
     </div>
 
     <div id="sell" hidden>
-      <label>Taglio</label><div class="chips" id="chips"></div>
-      <label for="sEmail">Email del cliente <small>(riceve il buono in PDF)</small></label>
-      <input class="in" id="sEmail" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
-      <label for="sName">Nome <small>(facoltativo)</small></label><input class="in" id="sName" autocomplete="off" maxlength="80">
-      <div class="msg" id="sellMsg" hidden></div><p></p>
-      <button class="big" id="sellGo" type="button">Crea e invia il buono</button>
-      <p style="color:#6b6b6b;font-size:.85rem">Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.</p>
+      <div id="sellForm">
+        <div class="tabs" role="tablist" aria-label="Tipo di buono">
+          <button type="button" role="tab" id="kDig" aria-selected="true">Digitale (email)</button>
+          <button type="button" role="tab" id="kPap" aria-selected="false">Cartaceo</button>
+        </div>
+        <label>Importo</label><div class="chips" id="chips"></div>
+        <label for="sFree">Altro importo <small>(euro interi, da 5 a 500)</small></label>
+        <input class="in money" id="sFree" inputmode="numeric" pattern="[0-9]*" placeholder="es. 40" autocomplete="off" maxlength="3">
+        <label for="sEmail" id="sEmailLbl">Email del cliente <small>(riceve il buono in PDF)</small></label>
+        <input class="in" id="sEmail" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
+        <label for="sName">Nome <small>(facoltativo)</small></label><input class="in" id="sName" autocomplete="off" maxlength="80">
+        <div id="sGiftWrap">
+          <label class="chk"><input type="checkbox" id="sGift"> È un regalo</label>
+          <div class="giftbox" id="sGiftBox" hidden>
+            <label for="sPer">Per <small>(chi lo riceve)</small></label><input class="in" id="sPer" autocomplete="off" maxlength="60">
+            <label for="sDa">Da parte di</label><input class="in" id="sDa" autocomplete="off" maxlength="60">
+            <label for="sMsg">Messaggio <small>(facoltativo · va sul biglietto del PDF)</small></label><textarea class="in" id="sMsg" maxlength="300" rows="3"></textarea>
+            <label for="sTo">Email di chi lo riceve <small>(facoltativa: se la scrivi il buono va a lui/lei e al cliente arriva solo la conferma, senza codice)</small></label>
+            <input class="in" id="sTo" type="email" inputmode="email" autocomplete="off" placeholder="regalo@email.it">
+          </div>
+        </div>
+        <div class="msg" id="sellMsg" hidden></div><p></p>
+        <button class="big" id="sellGo" type="button">Crea e invia il buono</button>
+        <p class="note" id="sellNote">Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.</p>
+      </div>
+      <!-- buono cartaceo creato: il codice è già attivo nel Foglio, la cassiera lo copia sul buono stampato -->
+      <div class="paperbox" id="paperOut" hidden>
+        <b>Scrivi sul buono cartaceo</b>
+        <div class="pcode" id="pCode"></div><div class="pamt" id="pAmt"></div>
+        <p>Il buono è già attivo. Controlla di aver copiato bene il codice: si usa in negozio e anche sul sito.</p>
+        <button class="big" id="pNext" type="button">Fatto</button>
+      </div>
     </div>
   </section>
 </div>
@@ -201,7 +237,8 @@
   'use strict';
   // stessa app web Apps Script del sito: la cassa chiama solo cassaPing, cassaInfo, cassaRedeem, cassaUndo e cassaIssue (con il PIN)
   var API = 'https://script.google.com/macros/s/AKfycbwsd82f1RfoOrKPgoVn40-I8s-FaSGV3zWP_j8VcWViL0w_5wStmwowqrGeeMD9tcd2Bg/exec';
-  var AMOUNTS = [50, 75, 100, 150, 200];
+  var AMOUNTS = [30, 50, 75, 100, 150, 200], FREE_MIN = 5, FREE_MAX = 500;   // tagli della cassa; altro importo: euro interi
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   var PIN_KEY = 'fi-cassa-pin';
   // jsQR 1.4.0: la copia nel sito, poi le due CDN se manca
   var JSQR = ['jsQR.min.js', 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js', 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];
@@ -284,7 +321,11 @@
     $('pinShow').textContent = hidden ? 'Mostra il PIN' : 'Nascondi il PIN';
     $('pin').focus();
   });
-  $('logout').addEventListener('click', function () { forget(); showPin(''); });
+  // "Esci" toglie il PIN dal telefono: chiede un secondo tocco, così un commesso non esce per sbaglio
+  $('logout').addEventListener('click', function () {
+    if (!twoTaps($('logout'), 'Sicuro? Tocca ancora per uscire')) return;
+    forget(); showPin('');
+  });
   $('pairGo').addEventListener('click', function () {
     var code = $('pairCode').value.replace(/\D/g, '');
     if (code.length !== 6) return say($('pairErr'), 'Il codice di abbinamento ha 6 cifre');
@@ -583,11 +624,15 @@
   $('go').addEventListener('click', function () {
     var amt = parseEuro($('amt').value), email = $('email').value.trim();
     if (!amt) return say($('spendErr'), 'Scrivi l\'importo dello scontrino, per esempio 65,60');
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return say($('spendErr'), 'L\'email non sembra giusta (puoi anche lasciarla vuota)');
+    if (email && !EMAIL_RE.test(email)) return say($('spendErr'), 'L\'email non sembra giusta (puoi anche lasciarla vuota)');
     say($('spendErr'), '');
     var use = Math.min(amt, card.balance), rest = amt - use;
+    // a chi va la mail del saldo: quella scritta qui (se è nuova diventa l'email del buono), oppure nessuna se il campo è vuoto
+    var saved = String(card.email || '').trim();
+    var mailTxt = !email ? 'Nessuna mail al cliente (campo email vuoto)'
+      : 'Mail del saldo a <b>' + escH(email) + '</b>' + (saved && saved.toLowerCase() !== email.toLowerCase() ? '<br><small>Diventa l\'email del buono al posto di ' + escH(saved) + '</small>' : '');
     $('confirmTxt').innerHTML = 'Scalo <b>' + euro(use) + '</b> dal buono ' + escH(card.code) + '.<br>Saldo: ' + euro(card.balance) + ' → <b>' + euro(card.balance - use) + '</b>' +
-      (rest ? '<br><b style="color:#b3261e">Il cliente paga la differenza: ' + euro(rest) + '</b>' : '');
+      (rest ? '<br><b style="color:#b3261e">Il cliente paga la differenza: ' + euro(rest) + '</b>' : '') + '<br>' + mailTxt;
     $('confirm').hidden = false; $('go').hidden = true;
     $('confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
@@ -601,7 +646,7 @@
       last = { code: d.code, moveId: d.moveId };
       $('cardView').hidden = true; $('doneView').hidden = false;
       $('dBal').textContent = euro(d.balance);
-      $('dTxt').textContent = 'Scalati ' + euro(d.used) + ' dal buono ' + d.code + (d.mailed ? ' · mail inviata a ' + d.email : ' · nessuna mail (email mancante)');
+      $('dTxt').textContent = 'Scalati ' + euro(d.used) + ' dal buono ' + d.code + (d.mailed ? ' · mail inviata a ' + d.email : d.email ? ' · mail non partita: riprova più tardi' : ' · nessuna mail al cliente');
       $('dPay').innerHTML = amt > use ? '<b style="color:#b3261e">Il cliente paga la differenza: ' + euro(amt - use) + '</b>' : '';
       $('undo').hidden = false; say($('undoMsg'), '');
       window.scrollTo(0, 0);
@@ -624,28 +669,65 @@
     });
   });
 
-  /* ---------- vendi un buono in negozio ---------- */
+  /* ---------- vendi un buono in negozio: digitale (PDF via email) o cartaceo (codice da scrivere sul buono stampato) ---------- */
+  var paper = false;
+  function sellKind(p) {
+    paper = p;
+    $('kDig').setAttribute('aria-selected', String(!p)); $('kPap').setAttribute('aria-selected', String(p));
+    $('sEmailLbl').innerHTML = p ? 'Email del cliente <small>(facoltativa · riceve il saldo dopo ogni uso)</small>' : 'Email del cliente <small>(riceve il buono in PDF)</small>';
+    $('sGiftWrap').hidden = p;   // il biglietto del regalo esiste solo nel PDF
+    $('sellGo').textContent = p ? 'Crea il codice' : 'Crea e invia il buono';
+    $('sellNote').textContent = p ? 'Fai prima lo scontrino come al solito. Il codice entra subito nel Foglio: poi lo scrivi sul buono cartaceo con l\'importo.'
+                                  : 'Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.';
+    say($('sellMsg'), '');
+  }
+  $('kDig').addEventListener('click', function () { sellKind(false); });
+  $('kPap').addEventListener('click', function () { sellKind(true); });
+  var pressChip = function (b) { $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); };
   $('chips').innerHTML = AMOUNTS.map(function (a) { return '<button type="button" data-a="' + a + '" aria-pressed="false">€ ' + a + '</button>'; }).join('');
   $('chips').addEventListener('click', function (ev) {
     var b = ev.target.closest('button[data-a]');
     if (!b) return;
-    sellAmount = Number(b.dataset.a);
-    $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    sellAmount = Number(b.dataset.a); $('sFree').value = '';
+    pressChip(b);
   });
+  // altro importo: vale quello scritto, i tagli si spengono
+  $('sFree').addEventListener('input', function () {
+    $('sFree').value = $('sFree').value.replace(/\D/g, '').slice(0, 3);
+    sellAmount = Number($('sFree').value) || 0;
+    pressChip(null);
+  });
+  $('sGift').addEventListener('change', function () { $('sGiftBox').hidden = !$('sGift').checked; });
+  function clearSell() {
+    $('sEmail').value = ''; $('sName').value = ''; $('sFree').value = ''; sellAmount = 0; pressChip(null);
+    $('sGift').checked = false; $('sGiftBox').hidden = true; ['sPer', 'sDa', 'sMsg', 'sTo'].forEach(function (id) { $(id).value = ''; });
+  }
   $('sellGo').addEventListener('click', function () {
     var email = $('sEmail').value.trim(), btn = $('sellGo');
-    if (!sellAmount) return say($('sellMsg'), 'Scegli il taglio');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return say($('sellMsg'), 'Serve l\'email del cliente per mandargli il buono');
-    if (!twoTaps(btn, 'Tocca di nuovo: € ' + sellAmount + ' a ' + email)) return;
-    btn.disabled = true; say($('sellMsg'), 'Creo il buono e lo invio… (qualche secondo)', 'info');
-    api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim() }).then(function (d) {
+    var reg = !paper && $('sGift').checked ? { on: true, per: $('sPer').value.trim(), da: $('sDa').value.trim(), msg: $('sMsg').value.trim(), to: $('sTo').value.trim() } : null;
+    if (!(sellAmount >= FREE_MIN && sellAmount <= FREE_MAX)) return say($('sellMsg'), 'Scegli il taglio oppure scrivi un importo da ' + FREE_MIN + ' a ' + FREE_MAX + ' €');
+    if (paper && email && !EMAIL_RE.test(email)) return say($('sellMsg'), 'L\'email non sembra giusta (puoi anche lasciarla vuota)');
+    if (!paper && !EMAIL_RE.test(email)) return say($('sellMsg'), 'Serve l\'email del cliente per mandargli il buono');
+    if (reg && reg.to && !EMAIL_RE.test(reg.to)) return say($('sellMsg'), 'L\'email di chi riceve il regalo non sembra giusta (puoi anche lasciarla vuota)');
+    var label = paper ? 'Tocca di nuovo: buono cartaceo da € ' + sellAmount
+                      : 'Tocca di nuovo: € ' + sellAmount + ' a ' + (reg && reg.to ? reg.to + ' (conferma a ' + email + ')' : email);
+    if (!twoTaps(btn, label)) return;
+    btn.disabled = true; say($('sellMsg'), paper ? 'Creo il codice…' : 'Creo il buono e lo invio… (qualche secondo)', 'info');
+    api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim(), regalo: reg, paper: paper }).then(function (d) {
       btn.disabled = false;
       if (!d.ok) return say($('sellMsg'), d.error);
-      say($('sellMsg'), '✓ Buono ' + d.code + ' da ' + euro(d.amount) + ' creato e inviato a ' + d.email, 'info');
-      $('sEmail').value = ''; $('sName').value = ''; sellAmount = 0;
-      $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      clearSell();
+      if (d.paper) {
+        say($('sellMsg'), '');
+        $('pCode').textContent = d.code; $('pAmt').textContent = euro(d.amount);
+        $('sellForm').hidden = true; $('paperOut').hidden = false;
+        window.scrollTo(0, 0);
+        return;
+      }
+      say($('sellMsg'), '✓ Buono ' + d.code + ' da ' + euro(d.amount) + ' creato e inviato a ' + (d.to ? d.to + ' come regalo (conferma senza codice a ' + d.email + ')' : d.email), 'info');
     });
   });
+  $('pNext').addEventListener('click', function () { $('paperOut').hidden = true; $('sellForm').hidden = false; });
 
   /* ---------- avvio ---------- */
   // aperta dal QR di un buono con la fotocamera dell'iPhone (link …/filati-cassa/#FI-XXXX-XXXX): cerca subito quel buono
