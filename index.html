@@ -207,7 +207,8 @@
             <input class="in" id="sTo" type="email" inputmode="email" autocomplete="off" placeholder="regalo@email.it">
           </div>
         </div>
-        <div class="msg" id="sellMsg" hidden></div><p></p>
+        <div class="msg" id="sellMsg" hidden></div>
+        <p class="note" id="sellSpam" hidden>Se il cliente non trova la mail, fagli controllare anche Spam e Promozioni.</p><p></p>
         <button class="big" id="sellGo" type="button">Crea e invia il buono</button>
         <p class="note" id="sellNote">Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.</p>
       </div>
@@ -679,7 +680,7 @@
     $('sellGo').textContent = p ? 'Crea il codice' : 'Crea e invia il buono';
     $('sellNote').textContent = p ? 'Fai prima lo scontrino come al solito. Il codice entra subito nel Foglio: poi lo scrivi sul buono cartaceo con l\'importo.'
                                   : 'Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.';
-    say($('sellMsg'), '');
+    say($('sellMsg'), ''); $('sellSpam').hidden = true;
   }
   $('kDig').addEventListener('click', function () { sellKind(false); });
   $('kPap').addEventListener('click', function () { sellKind(true); });
@@ -712,7 +713,7 @@
     var label = paper ? 'Tocca di nuovo: buono cartaceo da € ' + sellAmount
                       : 'Tocca di nuovo: € ' + sellAmount + ' a ' + (reg && reg.to ? reg.to + ' (conferma a ' + email + ')' : email);
     if (!twoTaps(btn, label)) return;
-    btn.disabled = true; say($('sellMsg'), paper ? 'Creo il codice…' : 'Creo il buono e lo invio… (qualche secondo)', 'info');
+    btn.disabled = true; $('sellSpam').hidden = true; say($('sellMsg'), paper ? 'Creo il codice…' : 'Creo il buono e lo invio… (qualche secondo)', 'info');
     api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim(), regalo: reg, paper: paper }).then(function (d) {
       btn.disabled = false;
       if (!d.ok) return say($('sellMsg'), d.error);
@@ -725,6 +726,7 @@
         return;
       }
       say($('sellMsg'), '✓ Buono ' + d.code + ' da ' + euro(d.amount) + ' creato e inviato a ' + (d.to ? d.to + ' come regalo (conferma senza codice a ' + d.email + ')' : d.email), 'info');
+      $('sellSpam').hidden = false;
     });
   });
   $('pNext').addEventListener('click', function () { $('paperOut').hidden = true; $('sellForm').hidden = false; });
