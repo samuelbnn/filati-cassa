@@ -22,19 +22,23 @@
   :root { --brand:#FA8900; --brand-dark:#d97600; --ink:#1f1f1f; --muted:#6b6b6b; --line:#e7e3df; --soft:#f6f2ee; --ok:#2e9d5b; --err:#b3261e; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #fff; color: var(--ink); font-family: 'Montserrat', Arial, sans-serif; }
+  /* caratteri grandi: la cassa la usano anche commessi che vedono meno bene (le misure in rem crescono tutte insieme) */
+  html { font-size: 20px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   /* spazio bianco in fondo: le barre di Safari non coprono i pulsanti in basso (es. "annulla questa operazione") */
   body { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   [hidden] { display: none !important; }
   button, input { font: inherit; color: inherit; }
+  /* le email lunghe vanno a capo invece di uscire dallo schermo */
+  .app, .busy { overflow-wrap: anywhere; word-break: break-word; }
   .app { max-width: 480px; margin: 0 auto; }
   .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
   .top h1 { margin: 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-  .top h1 img { width: 30px; height: 30px; }
+  .top h1 img { width: 36px; height: 36px; }
   .top h1 span { color: var(--brand-dark); }
   .link { border: 0; background: none; font-weight: 600; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 6px 0; }
   .link[data-armed] { color: #b3261e; font-weight: 800; }   /* in attesa del secondo tocco */
   .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
-  .tabs button { border: 0; background: none; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .tabs button { border: 0; background: none; border-radius: 10px; padding: 12px 6px; line-height: 1.25; font-weight: 700; cursor: pointer; color: var(--muted); }
   .tabs button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
   .big { width: 100%; border: 0; border-radius: 16px; padding: 18px; font-weight: 800; font-size: 1.1rem; background: var(--brand); color: #fff; cursor: pointer; }
   .big:active { transform: scale(.98); } .big:disabled { opacity: .6; }
@@ -48,19 +52,25 @@
   .in { width: 100%; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 12px; outline: none; font-size: 1.05rem; background: #fff; }
   .in:focus { border-color: var(--brand); }
   .in.code { text-transform: uppercase; letter-spacing: .1em; font-family: Consolas, monospace; }
+  /* codice a mano: "FI-" è già scritto davanti, si battono solo le 8 lettere e cifre */
+  .codebox { flex: 1; min-width: 0; display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; padding-left: 12px; }
+  .codebox:focus-within { border-color: var(--brand); }
+  .codebox .pre { font-family: Consolas, monospace; font-weight: 700; letter-spacing: .1em; font-size: 1.05rem; color: var(--muted); }
+  .row .codebox .in { border: 0; padding-left: 2px; }
   .in.money { font-size: 1.6rem; font-weight: 800; text-align: center; }
   textarea.in { resize: vertical; min-height: 80px; font: inherit; font-size: 1rem; }
   .chk { display: flex; align-items: center; gap: 10px; margin: 16px 0 4px; cursor: pointer; }
-  .chk input { width: 22px; height: 22px; accent-color: var(--brand); margin: 0; }
+  .chk input { width: 26px; height: 26px; accent-color: var(--brand); margin: 0; flex: none; }
   .giftbox { border: 1.5px solid var(--line); border-radius: 14px; padding: 2px 14px 14px; background: #fffaf3; }
   .note { color: var(--muted); font-size: .85rem; }
   /* buono cartaceo appena creato: il codice da scrivere a mano, grande */
   .paperbox { text-align: center; border: 2px dashed var(--brand); border-radius: 18px; padding: 20px 14px; margin-top: 4px; background: #fffaf3; }
-  .paperbox .pcode { font-family: Consolas, monospace; font-size: 2.1rem; font-weight: 800; letter-spacing: .06em; margin: 8px 0 2px; }
+  /* il codice resta su una riga: sui telefoni stretti il carattere si adatta alla larghezza */
+  .paperbox .pcode { font-family: Consolas, monospace; font-size: clamp(1.4rem, 8.6vw, 2.3rem); font-weight: 800; letter-spacing: .06em; white-space: nowrap; margin: 8px 0 2px; }
   .paperbox .pamt { font-size: 1.4rem; font-weight: 900; color: var(--brand-dark); }
   .paperbox p { color: var(--muted); font-size: .9rem; margin: 10px 0 16px; }
   .row { display: flex; gap: 8px; } .row .in { flex: 1; min-width: 0; }
-  .row button { border: 0; border-radius: 12px; padding: 0 18px; background: var(--ink); color: #fff; font-weight: 700; cursor: pointer; }
+  .row button { border: 0; border-radius: 12px; padding: 0 16px; background: var(--ink); color: #fff; font-weight: 700; cursor: pointer; flex: none; }
   .msg { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; font-size: .9rem; font-weight: 600; }
   .msg.err { background: #fdecea; color: var(--err); } .msg.info { background: var(--soft); color: var(--muted); }
   .cardbox { border: 2px solid var(--brand); border-radius: 18px; padding: 16px; margin-top: 16px; background: #fffaf3; }
@@ -74,18 +84,27 @@
   .confirm b { font-size: 1.05rem; }
   .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .done { text-align: center; padding: 18px 8px; }
-  .done .tick { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 2rem; font-weight: 900;
+  .done .tick { width: 76px; height: 76px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 2.2rem; font-weight: 900;
                 display: grid; place-items: center; margin: 0 auto 10px; }
   .done h2 { margin: 0 0 6px; }
   .done .bal { font-size: 2rem; font-weight: 900; }
   .done p { color: var(--muted); margin: 6px 0; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chips button { flex: 1 1 28%; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-weight: 800; cursor: pointer; }
+  .chips button { flex: 1 1 28%; height: 58px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
   .chips button[aria-pressed="true"] { border-color: var(--brand); background: #fff4e6; color: var(--brand-dark); }
   .pin { text-align: center; padding-top: 30px; }
   .pin .in { text-align: center; font-size: 1.6rem; letter-spacing: .4em; max-width: 220px; margin: 0 auto; display: block; }
   .pin p { color: var(--muted); }
   .masked { -webkit-text-security: disc; text-security: disc; }
+
+  /* attesa: lo schermo si copre con una rotella grande e la scritta di cosa sta succedendo; finché non arriva la risposta
+     non si può toccare altro (prima i commessi non si accorgevano dell'attesa e toccavano altri pulsanti) */
+  .busy { position: fixed; inset: 0; z-index: 60; background: rgba(255,255,255,.97); display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
+  .busy .spin { width: 72px; height: 72px; border-radius: 50%; border: 8px solid #f6e3cc; border-top-color: var(--brand); animation: spin .9s linear infinite; }
+  .busy b { font-size: 1.35rem; }
+  .busy small { color: var(--muted); font-size: .95rem; max-width: 320px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* lettore QR dal vivo: tutto schermo, con il riquadro di mira */
   .scanner { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; flex-direction: column; }
@@ -110,7 +129,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><h1><img src="icon-192.png" alt="">Cassa <span>Gift Card</span></h1><button class="link" id="logout" type="button" hidden>Esci</button></div>
+  <div class="top"><h1><img src="icon-192.png" alt="">Cassa <span>Gift Card</span></h1></div>
 
   <section class="pin" id="pinView" hidden>
     <h2>PIN del negozio</h2><p>Serve solo la prima volta su questo telefono.</p>
@@ -156,8 +175,10 @@
           Inquadra il QR del buono</button>
         <button class="link alt" id="photo" type="button" hidden>La fotocamera non parte? Scatta una foto del QR</button>
         <input id="cam" type="file" accept="image/*" capture="environment" hidden>
-        <div class="or">oppure scrivi il codice</div>
-        <div class="row"><input class="in code" id="code" placeholder="FI-XXXX-XXXX" maxlength="20" autocomplete="off" spellcheck="false">
+        <div class="or">oppure scrivi le 8 lettere e cifre del codice</div>
+        <div class="row"><div class="codebox"><span class="pre" aria-hidden="true">FI-</span>
+          <input class="in code" id="code" maxlength="9" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+                 aria-label="Codice del buono (FI- è già scritto)"></div>
           <button type="button" id="look">Cerca</button></div>
         <div class="msg" id="findMsg" hidden></div>
       </div>
@@ -187,13 +208,14 @@
 
     <div id="sell" hidden>
       <div id="sellForm">
+        <!-- di solito i clienti vogliono il buono di carta: Cartaceo è la scelta di partenza -->
         <div class="tabs" role="tablist" aria-label="Tipo di buono">
-          <button type="button" role="tab" id="kDig" aria-selected="true">Digitale (email)</button>
-          <button type="button" role="tab" id="kPap" aria-selected="false">Cartaceo</button>
+          <button type="button" role="tab" id="kPap" aria-selected="true">Cartaceo</button>
+          <button type="button" role="tab" id="kDig" aria-selected="false">Digitale (email)</button>
         </div>
         <label>Importo</label><div class="chips" id="chips"></div>
         <label for="sFree">Altro importo <small>(euro interi, da 5 a 500)</small></label>
-        <input class="in money" id="sFree" inputmode="numeric" pattern="[0-9]*" placeholder="es. 40" autocomplete="off" maxlength="3">
+        <input class="in money" id="sFree" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="3">
         <label for="sEmail" id="sEmailLbl">Email del cliente <small>(riceve il buono in PDF)</small></label>
         <input class="in" id="sEmail" type="email" inputmode="email" autocomplete="off" placeholder="cliente@email.it">
         <label for="sName">Nome <small>(facoltativo)</small></label><input class="in" id="sName" autocomplete="off" maxlength="80">
@@ -207,8 +229,7 @@
             <input class="in" id="sTo" type="email" inputmode="email" autocomplete="off" placeholder="regalo@email.it">
           </div>
         </div>
-        <div class="msg" id="sellMsg" hidden></div>
-        <p class="note" id="sellSpam" hidden>Se il cliente non trova la mail, fagli controllare anche Spam e Promozioni.</p><p></p>
+        <div class="msg" id="sellMsg" hidden></div><p></p>
         <button class="big" id="sellGo" type="button">Crea e invia il buono</button>
         <p class="note" id="sellNote">Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.</p>
       </div>
@@ -219,9 +240,17 @@
         <p>Il buono è già attivo. Controlla di aver copiato bene il codice: si usa in negozio e anche sul sito.</p>
         <button class="big" id="pNext" type="button">Fatto</button>
       </div>
+      <!-- buono digitale creato e mandato: conferma ben visibile -->
+      <div class="done" id="sentOut" hidden><div class="tick">✓</div><h2>Buono inviato!</h2>
+        <div class="bal" id="sAmt"></div><p id="sTxt"></p>
+        <p class="note">Se il cliente non trova la mail, fagli controllare anche Spam e Promozioni.</p>
+        <button class="big" id="sNext" type="button">Fatto</button></div>
     </div>
   </section>
 </div>
+
+<div class="busy" id="busy" hidden role="status" aria-live="assertive"><div class="spin" aria-hidden="true"></div>
+  <b id="busyTxt">Un attimo…</b><small id="busySub"></small></div>
 
 <div class="scanner" id="scanner" hidden role="dialog" aria-label="Lettore QR">
   <video id="video" playsinline muted autoplay></video>
@@ -273,13 +302,27 @@
   }
   function say(el, text, kind) { el.textContent = text; el.className = 'msg ' + (kind || 'err'); el.hidden = !text; }
 
+  /* ---------- attesa ben visibile ---------- */
+  var busyTimer = null;
+  function busy(text) {
+    $('busyTxt').textContent = text; $('busySub').textContent = 'Aspetta qualche secondo, non toccare altro.';
+    $('busy').hidden = false;
+    var a = document.activeElement; if (a && a.blur) a.blur();   // si chiude la tastiera: la rotella si vede tutta
+    clearTimeout(busyTimer);
+    busyTimer = setTimeout(function () { $('busySub').textContent = 'Ci vuole un po\' più del solito: aspetta ancora un attimo.'; }, 8000);
+  }
+  function idle() { clearTimeout(busyTimer); $('busy').hidden = true; }
+
   /* ---------- chiamate all'app web (con il PIN) ---------- */
-  function api(body) {
+  // wait: la scritta dell'attesa ("Cerco il buono…"); senza, la chiamata va in sottofondo
+  function api(body, wait) {
     body.pin = PIN; body.device = DEVICE;
+    if (wait) busy(wait);
     return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json(); })
       .catch(function () { return { ok: false, error: 'Connessione assente: riprova' }; })
       .then(function (d) {
+        if (wait) idle();
         if (!d.ok && /^Telefono non autorizzato/.test(d.error || '')) { paired(false); showPair(''); }
         else if (!d.ok && /^PIN|Cassa non attiva/.test(d.error || '')) { forget(); showPin(d.error); }
         else if (d.ok) paired(true);
@@ -290,7 +333,6 @@
   /* ---------- PIN e abbinamento del telefono ---------- */
   function view(id) {
     ['pinView', 'pairView', 'guestView', 'main'].forEach(function (v) { $(v).hidden = v !== id; });
-    $('logout').hidden = id !== 'main';
   }
   function showPin(err) { stopScan(); view('pinView'); say($('pinErr'), err || ''); $('pin').focus(); }
   function showPair(err) { stopScan(); view('pairView'); say($('pairErr'), err || ''); $('pairCode').focus(); }
@@ -302,9 +344,9 @@
     if (v.length < 4) return say($('pinErr'), 'Il PIN ha almeno 4 cifre');
     // il PIN si controlla subito: se è sbagliato lo dice qui, non alla prima ricerca
     var btn = $('pinGo');
-    btn.disabled = true; say($('pinErr'), 'Controllo il PIN…', 'info');
+    btn.disabled = true; say($('pinErr'), '');
     PIN = v;
-    api({ api: 'cassaPing' }).then(function (d) {
+    api({ api: 'cassaPing' }, 'Controllo il PIN…').then(function (d) {
       btn.disabled = false;
       $('pin').value = '';
       if (!d.ok && !$('pairView').hidden) return;   // PIN da controllare all'abbinamento: resta in memoria fino ad allora
@@ -322,18 +364,14 @@
     $('pinShow').textContent = hidden ? 'Mostra il PIN' : 'Nascondi il PIN';
     $('pin').focus();
   });
-  // "Esci" toglie il PIN dal telefono: chiede un secondo tocco, così un commesso non esce per sbaglio
-  $('logout').addEventListener('click', function () {
-    if (!twoTaps($('logout'), 'Sicuro? Tocca ancora per uscire')) return;
-    forget(); showPin('');
-  });
+  // niente "Esci": il telefono resta collegato alla cassa (se il PIN cambia, la cassa lo richiede da sola)
   $('pairGo').addEventListener('click', function () {
     var code = $('pairCode').value.replace(/\D/g, '');
     if (code.length !== 6) return say($('pairErr'), 'Il codice di abbinamento ha 6 cifre');
     if (!PIN) return showPin('');
     var btn = $('pairGo');
-    btn.disabled = true; say($('pairErr'), 'Abbino il telefono…', 'info');
-    api({ api: 'cassaPair', pair: code, name: $('pairName').value.trim().slice(0, 40) }).then(function (d) {
+    btn.disabled = true; say($('pairErr'), '');
+    api({ api: 'cassaPair', pair: code, name: $('pairName').value.trim().slice(0, 40) }, 'Abbino il telefono…').then(function (d) {
       btn.disabled = false;
       if (!d.ok) { if (!$('pairView').hidden) say($('pairErr'), d.error); return; }
       $('pairCode').value = ''; say($('pairErr'), '');
@@ -501,7 +539,7 @@
     scanning = false;
     $('aim').classList.add('hit');
     try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
-    setTimeout(function () { stopScan(); $('code').value = code; lookup(); }, 180);
+    setTimeout(function () { stopScan(); setCode(code); lookup(); }, 180);
   }
   // torcia, zoom e messa a fuoco continua dove il telefono li offre alla pagina (di solito Android)
   function setupTrack() {
@@ -580,10 +618,11 @@
     var f = $('cam').files && $('cam').files[0];
     $('cam').value = '';
     if (!f) return;
-    say($('findMsg'), 'Leggo il QR…', 'info');
+    say($('findMsg'), ''); busy('Leggo il QR…');
     Promise.all([loadJsQR().catch(function () {}), detectorReady]).then(function () { return decodePhoto(f); }).then(function (text) {
+      idle();
       var code = codeIn(text);
-      if (code) { $('code').value = code; return lookup(); }
+      if (code) { setCode(code); return lookup(); }
       say($('findMsg'), text ? 'Questo QR non è un buono Filati Italia.'
         : window.jsQR || detector ? 'Non trovo il QR nella foto: scattala a 15–20 cm con il QR al centro e a fuoco, oppure scrivi il codice.'
         : 'Non riesco ad aprire il lettore QR: scrivi il codice a mano.');
@@ -591,13 +630,24 @@
   });
 
   /* ---------- cerca il buono ---------- */
+  // codice scritto a mano: "FI-" è già davanti al campo, si battono solo le 8 lettere e cifre e il trattino si mette da solo.
+  // Nei codici non c'è mai la I: se qualcuno scrive lo stesso "FI" all'inizio, si toglie
+  function codeBody(s) {
+    s = String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (s.indexOf('FI') === 0) s = s.slice(2);
+    return s.slice(0, 8);
+  }
+  var dashed = function (b) { return b.length > 4 ? b.slice(0, 4) + '-' + b.slice(4) : b; };
+  function setCode(s) { $('code').value = dashed(codeBody(s)); }
+  function fullCode() { var b = codeBody($('code').value); return b ? 'FI-' + dashed(b) : ''; }
+  $('code').addEventListener('input', function () { setCode($('code').value); });
   $('look').addEventListener('click', lookup);
   $('code').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') lookup(); });
   function lookup() {
-    var v = $('code').value.trim();
-    if (!v) return;
-    say($('findMsg'), 'Cerco il buono…', 'info');
-    api({ api: 'cassaInfo', code: v }).then(function (d) {
+    var v = fullCode();
+    if (!v) { $('code').focus(); return; }
+    say($('findMsg'), '');
+    api({ api: 'cassaInfo', code: v }, 'Cerco il buono…').then(function (d) {
       if (!d.ok) return say($('findMsg'), d.error);
       showCard(d);
     });
@@ -641,7 +691,7 @@
   $('yes').addEventListener('click', function () {
     var amt = parseEuro($('amt').value), use = Math.min(amt, card.balance), btn = $('yes');
     btn.disabled = true; btn.textContent = 'Un attimo…';
-    api({ api: 'cassaRedeem', code: card.code, amount: use, email: $('email').value.trim(), ref: $('ref').value.trim() }).then(function (d) {
+    api({ api: 'cassaRedeem', code: card.code, amount: use, email: $('email').value.trim(), ref: $('ref').value.trim() }, 'Scalo dal buono…').then(function (d) {
       btn.disabled = false; btn.textContent = 'Conferma';
       if (!d.ok) { $('confirm').hidden = true; $('go').hidden = false; return say($('spendErr'), d.error); }
       last = { code: d.code, moveId: d.moveId };
@@ -662,7 +712,7 @@
   }
   $('undo').addEventListener('click', function () {
     if (!last || !twoTaps($('undo'), 'Tocca di nuovo per annullare l\'operazione')) return;
-    api({ api: 'cassaUndo', code: last.code, moveId: last.moveId }).then(function (d) {
+    api({ api: 'cassaUndo', code: last.code, moveId: last.moveId }, 'Annullo l\'operazione…').then(function (d) {
       if (!d.ok) return say($('undoMsg'), d.error);
       $('dBal').textContent = euro(d.balance);
       $('dTxt').textContent = 'Operazione annullata: il credito è tornato sul buono.';
@@ -670,8 +720,8 @@
     });
   });
 
-  /* ---------- vendi un buono in negozio: digitale (PDF via email) o cartaceo (codice da scrivere sul buono stampato) ---------- */
-  var paper = false;
+  /* ---------- vendi un buono in negozio: cartaceo (codice da scrivere sul buono stampato, la scelta di partenza) o digitale (PDF via email) ---------- */
+  var paper = true;
   function sellKind(p) {
     paper = p;
     $('kDig').setAttribute('aria-selected', String(!p)); $('kPap').setAttribute('aria-selected', String(p));
@@ -680,10 +730,11 @@
     $('sellGo').textContent = p ? 'Crea il codice' : 'Crea e invia il buono';
     $('sellNote').textContent = p ? 'Fai prima lo scontrino come al solito. Il codice entra subito nel Foglio: poi lo scrivi sul buono cartaceo con l\'importo.'
                                   : 'Fai prima lo scontrino del buono come al solito: qui il buono viene solo creato e mandato al cliente.';
-    say($('sellMsg'), ''); $('sellSpam').hidden = true;
+    say($('sellMsg'), ''); delete $('sellGo').dataset.armed;
   }
   $('kDig').addEventListener('click', function () { sellKind(false); });
   $('kPap').addEventListener('click', function () { sellKind(true); });
+  sellKind(true);
   var pressChip = function (b) { $('chips').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); };
   $('chips').innerHTML = AMOUNTS.map(function (a) { return '<button type="button" data-a="' + a + '" aria-pressed="false">€ ' + a + '</button>'; }).join('');
   $('chips').addEventListener('click', function (ev) {
@@ -710,26 +761,29 @@
     if (paper && email && !EMAIL_RE.test(email)) return say($('sellMsg'), 'L\'email non sembra giusta (puoi anche lasciarla vuota)');
     if (!paper && !EMAIL_RE.test(email)) return say($('sellMsg'), 'Serve l\'email del cliente per mandargli il buono');
     if (reg && reg.to && !EMAIL_RE.test(reg.to)) return say($('sellMsg'), 'L\'email di chi riceve il regalo non sembra giusta (puoi anche lasciarla vuota)');
-    var label = paper ? 'Tocca di nuovo: buono cartaceo da € ' + sellAmount
-                      : 'Tocca di nuovo: € ' + sellAmount + ' a ' + (reg && reg.to ? reg.to + ' (conferma a ' + email + ')' : email);
-    if (!twoTaps(btn, label)) return;
-    btn.disabled = true; $('sellSpam').hidden = true; say($('sellMsg'), paper ? 'Creo il codice…' : 'Creo il buono e lo invio… (qualche secondo)', 'info');
-    api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim(), regalo: reg, paper: paper }).then(function (d) {
-      btn.disabled = false;
+    // il cartaceo si crea con un tocco solo; il digitale chiede un secondo tocco che fa vedere a chi parte la mail
+    if (!paper && !twoTaps(btn, 'Tocca di nuovo: € ' + sellAmount + ' a ' + (reg && reg.to ? reg.to + ' (conferma a ' + email + ')' : email))) return;
+    say($('sellMsg'), '');
+    api({ api: 'cassaIssue', amount: sellAmount, email: email, name: $('sName').value.trim(), regalo: reg, paper: paper },
+        paper ? 'Creo il codice…' : 'Creo il buono e lo mando…').then(function (d) {
       if (!d.ok) return say($('sellMsg'), d.error);
       clearSell();
+      $('sellForm').hidden = true;
       if (d.paper) {
-        say($('sellMsg'), '');
         $('pCode').textContent = d.code; $('pAmt').textContent = euro(d.amount);
-        $('sellForm').hidden = true; $('paperOut').hidden = false;
-        window.scrollTo(0, 0);
-        return;
+        $('paperOut').hidden = false;
+      } else {
+        $('sAmt').textContent = euro(d.amount);
+        $('sTxt').innerHTML = 'Buono <b>' + escH(d.code) + '</b> mandato a <b>' + escH(d.to || d.email) + '</b>' +
+          (d.to ? ' come regalo.<br>Al cliente (' + escH(d.email) + ') arriva la conferma, senza codice.' : '.');
+        $('sentOut').hidden = false;
       }
-      say($('sellMsg'), '✓ Buono ' + d.code + ' da ' + euro(d.amount) + ' creato e inviato a ' + (d.to ? d.to + ' come regalo (conferma senza codice a ' + d.email + ')' : d.email), 'info');
-      $('sellSpam').hidden = false;
+      window.scrollTo(0, 0);
     });
   });
-  $('pNext').addEventListener('click', function () { $('paperOut').hidden = true; $('sellForm').hidden = false; });
+  function backToSell() { $('paperOut').hidden = true; $('sentOut').hidden = true; $('sellForm').hidden = false; window.scrollTo(0, 0); }
+  $('pNext').addEventListener('click', backToSell);
+  $('sNext').addEventListener('click', backToSell);
 
   /* ---------- avvio ---------- */
   // aperta dal QR di un buono con la fotocamera dell'iPhone (link …/filati-cassa/#FI-XXXX-XXXX): cerca subito quel buono
@@ -743,7 +797,7 @@
   }
   function startMain() {
     started = true; showMain(); reset();
-    if (linked) { $('code').value = linked; linked = ''; lookup(); }
+    if (linked) { setCode(linked); linked = ''; lookup(); }
   }
   window.addEventListener('hashchange', function () { if (takeLink() && started && PIN) { stopScan(); tab(true); startMain(); } });
   takeLink();
